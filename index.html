@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Практическая работа: Разработка с ИИ</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #07070c;
+      --surface: rgba(255,255,255,0.04);
+      --surface-hover: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.2);
+      --text: #ffffff;
+      --text-muted: rgba(255,255,255,0.45);
+      --text-dim: rgba(255,255,255,0.3);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* === Background Effects === */
+    .bg-effects {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      animation: float 20s ease-in-out infinite;
+    }
+
+    .bg-orb--1 {
+      width: 600px;
+      height: 600px;
+      top: -10%;
+      left: 20%;
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    .bg-orb--2 {
+      width: 500px;
+      height: 500px;
+      bottom: -5%;
+      right: 15%;
+      background: rgba(168, 85, 247, 0.06);
+      animation-delay: -7s;
+    }
+
+    .bg-orb--3 {
+      width: 400px;
+      height: 400px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(59, 130, 246, 0.04);
+      animation-delay: -14s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -20px) scale(1.05); }
+      66% { transform: translate(-20px, 15px) scale(0.95); }
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.025;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+
+    /* === Layout === */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* === Header === */
+    .header {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      margin-bottom: 32px;
+    }
+
+    .badge__dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .badge__text {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .title {
+      font-size: clamp(2.2rem, 6vw, 4.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+    }
+
+    .title__line1 {
+      display: block;
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .title__line2 {
+      display: block;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* === Sections === */
+    .sections {
+      padding-bottom: 80px;
+    }
+
+    .section {
+      margin-bottom: 80px;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section__header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .section__label {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .section__label::before,
+    .section__label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    }
+
+    .section__label-text {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .section__title {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* === Cards Grid === */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    /* === Card === */
+    .card {
+      position: relative;
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      backdrop-filter: blur(8px);
+      padding: 32px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: var(--border-hover);
+      background: var(--surface-hover);
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.3),
+        0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .card__glow {
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      filter: blur(50px);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .card:hover .card__glow {
+      opacity: 0.2;
+    }
+
+    .card__gradient-overlay {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      border-radius: 20px;
+    }
+
+    .card:hover .card__gradient-overlay {
+      opacity: 0.06;
+    }
+
+    .card__content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .card__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .card__icon {
+      font-size: 2.5rem;
+      line-height: 1;
+    }
+
+    .card__arrow {
+      width: 24px;
+      height: 24px;
+      color: rgba(255,255,255,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .card:hover .card__arrow {
+      color: rgba(255,255,255,0.8);
+      transform: translate(3px, -3px);
+    }
+
+    .card__title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .card__desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      transition: color 0.3s ease;
+    }
+
+    .card:hover .card__desc {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .card__accent {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      width: 0;
+      transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .card:hover .card__accent {
+      width: 100%;
+    }
+
+    /* Card color variants */
+    .card--blue .card__glow { background: #3b82f6; }
+    .card--blue .card__gradient-overlay { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+    .card--blue .card__accent { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+
+    .card--green .card__glow { background: #10b981; }
+    .card--green .card__gradient-overlay { background: linear-gradient(135deg, #10b981, #14b8a6); }
+    .card--green .card__accent { background: linear-gradient(90deg, #10b981, #14b8a6); }
+
+    .card--purple .card__glow { background: #8b5cf6; }
+    .card--purple .card__gradient-overlay { background: linear-gradient(135deg, #8b5cf6, #a855f7); }
+    .card--purple .card__accent { background: linear-gradient(90deg, #8b5cf6, #a855f7); }
+
+    .card--cyan .card__glow { background: #06b6d4; }
+    .card--cyan .card__gradient-overlay { background: linear-gradient(135deg, #06b6d4, #3b82f6); }
+    .card--cyan .card__accent { background: linear-gradient(90deg, #06b6d4, #3b82f6); }
+
+    .card--orange .card__glow { background: #f97316; }
+    .card--orange .card__gradient-overlay { background: linear-gradient(135deg, #f97316, #ef4444); }
+    .card--orange .card__accent { background: linear-gradient(90deg, #f97316, #ef4444); }
+
+    .card--pink .card__glow { background: #ec4899; }
+    .card--pink .card__gradient-overlay { background: linear-gradient(135deg, #ec4899, #f43f5e); }
+    .card--pink .card__accent { background: linear-gradient(90deg, #ec4899, #f43f5e); }
+
+    .card--amber .card__glow { background: #f59e0b; }
+    .card--amber .card__gradient-overlay { background: linear-gradient(135deg, #f59e0b, #eab308); }
+    .card--amber .card__accent { background: linear-gradient(90deg, #f59e0b, #eab308); }
+
+    /* === Footer === */
+    .footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .footer__decor {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .footer__line {
+      width: 48px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2));
+    }
+
+    .footer__line:last-child {
+      background: linear-gradient(90deg, rgba(255,255,255,0.2), transparent);
+    }
+
+    .footer__star {
+      color: rgba(255,255,255,0.3);
+      font-size: 12px;
+    }
+
+    .footer__text {
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.35);
+      font-weight: 500;
+    }
+
+    /* === Responsive === */
+    @media (max-width: 768px) {
+      .header {
+        padding: 60px 0 40px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .section {
+        margin-bottom: 60px;
+      }
+
+      .card {
+        padding: 24px;
+      }
+    }
+
+    /* === Animations on scroll === */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Effects -->
+  <div class="bg-effects">
+    <div class="bg-orb bg-orb--1"></div>
+    <div class="bg-orb bg-orb--2"></div>
+    <div class="bg-orb bg-orb--3"></div>
+  </div>
+  <div class="bg-grid"></div>
+
+  <!-- Content -->
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="badge">
+        <span class="badge__dot"></span>
+        <span class="badge__text">Портфолио практических работ</span>
+      </div>
+      <h1 class="title">
+        <span class="title__line1">Практическая работа:</span>
+        <span class="title__line2">Разработка с ИИ</span>
+      </h1>
+      <p class="subtitle">
+        Коллекция проектов, созданных с помощью различных нейросетей и ИИ-агентов.
+        От базовых чат-моделей до автономных систем.
+      </p>
+    </header>
+
+    <!-- Sections -->
+    <main class="sections">
+      <!-- Базовый уровень -->
+      <section class="section fade-in">
+        <div class="section__header">
+          <div class="section__label">
+            <span class="section__label-text">Отечественные ИИ</span>
+          </div>
+          <h2 class="section__title">Базовый уровень</h2>
+        </div>
+        <div class="cards">
+          <a href="YaGPT.html" class="card card--blue">
+            <div class="card__glow"></div>
+            <div class="card__gradient-overlay"></div>
+            <div class="card__content">
+              <div class="card__top">
+                <span class="card__icon">🇷🇺</span>
+                <svg class="card__arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
+                </svg>
+              </div>
+              <h3 class="card__title">YaGPT</h3>
+              <p class="card__desc">Нейросеть от Яндекса — генерация текстов, диалоги, анализ</p>
+            </div>
+            <div class="card__accent"></div>
+          </a>
+          <a href="gigachat.html" class="card card--green">
+            <div class="card__glow"></div>
+            <div class="card__gradient-overlay"></div>
+            <div class="card__content">
+              <div class="card__top">
+                <span class="card__icon">🟢</span>
+                <svg class="card__arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
+                </svg>
+              </div>
+              <h3 class="card__title">GigaChat</h3>
+              <p class="card__desc">ИИ-ассистент от Сбера — универсальный помощник</p>
+            </div>
+            <div class="card__accent"></div>
+          </a>
+        </div>
+      </section>
+
+      <!-- Зарубежные ИИ -->
+      <section class="section fade-in">
+        <div class="section__header">
+          <div class="section__label">
+            <span class="section__label-text">Международные модели</span>
+          </div>
+          <h2 class="section__title">Зарубежные ИИ и веб-режимы</h2>
+        </div>
+        <div class="cards">
+          <a href="deepseek.html" class="card card--purple">
+            <div class="card__glow"></div>
+            <div class="card__gradient-overlay"></div>
+            <div class="card__content">
+              <div class="card__top">
+                <span class="card__icon">🔍</span>
+                <svg class="card__arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
+                </svg>
+              </div>
+              <h3 class="card__title">DeepSeek</h3>
+              <p class="card__desc">Мощная модель с глубоким анализом и рассуждениями</p>
+            </div>
+            <div class="card__accent"></div>
+          </a>
+          <a href="qwen.html" class="card card--cyan">
+            <div class="card__glow"></div>
+            <div class="card__gradient-overlay"></div>
+            <div class="card__content">
+              <div class="card__top">
+                <span class="card__icon">💬</span>
+                <svg class="card__arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
+                </svg>
+              </div>
+              <h3 class="card__title">Qwen Chat</h3>
+              <p class="card__desc">Чат-интерфейс Qwen — диалоги и генерация контента</p>
+            </div>
+            <div class="card__accent"></div>
+          </a>
+          <a href="qwen_web_dev.html" class="card card--orange">
+            <div class="card__glow"></div>
+            <div class="card__gradient-overlay"></div>
+            <div class="card__content">
+              <div class="card__top">
+                <span class="card__icon">🌐</span>
+                <svg class="card__arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
+                </svg>
+              </div>
+              <h3 class="card__title">Qwen WebDev</h3>
+              <p class="card__desc">Специализированный режим для веб-разработки</p>
+            </div>
+            <div class="card__accent"></div>
+          </a>
+        </div>
+      </section>
+
+      <!-- Продвинутые Агенты -->
+      <section class="section fade-in">
+        <div class="section__header">
+          <div class="section__label">
+            <span class="section__label-text">Автономные системы</span>
+          </div>
+          <h2 class="section__title">Продвинутые Агенты</h2>
+        </div>
+        <div class="cards">
+          <a href="qwen_agen.html" class="card card--pink">
+            <div class="card__glow"></div>
+            <div class="card__gradient-overlay"></div>
+            <div class="card__content">
+              <div class="card__top">
+                <span class="card__icon">🤖</span>
+                <svg class="card__arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
+                </svg>
+              </div>
+              <h3 class="card__title">Qwen Agent</h3>
+              <p class="card__desc">Агентная система с планированием и выполнением задач</p>
+            </div>
+            <div class="card__accent"></div>
+          </a>
+          <a href="openclaw.html" class="card card--amber">
+            <div class="card__glow"></div>
+            <div class="card__gradient-overlay"></div>
+            <div class="card__content">
+              <div class="card__top">
+                <span class="card__icon">⚡</span>
+                <svg class="card__arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M17 7H7M17 7v10"/>
+                </svg>
+              </div>
+              <h3 class="card__title">Автономный агент OpenClaw</h3>
+              <p class="card__desc">Полностью автономный агент с расширенными возможностями</p>
+            </div>
+            <div class="card__accent"></div>
+          </a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__decor">
+      <div class="footer__line"></div>
+      <span class="footer__star">✦</span>
+      <div class="footer__line"></div>
+    </div>
+    <p class="footer__text">Выполнил студент курса по вайбкодингу, 2026</p>
+  </footer>
+
+  <!-- Scroll Animation Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in').forEach(function(el) {
+        observer.observe(el);
+      });
+    });
+  </script>
+</body>
+</html>
